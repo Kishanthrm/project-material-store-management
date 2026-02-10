@@ -1,0 +1,11 @@
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fb;
+}
+
+.layout-content {
+  flex: 1;
+  padding: 100px 30px 30px;
+  transition: margin-left 0.3s ease;
+}
