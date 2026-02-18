@@ -1,25 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./HomePage.css";
 
 const HomePageContent = () => {
+  const [student, setStudent] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [labs, setLabs] = useState([]);
+  const [materialsList, setMaterialsList] = useState([]);
+
   const [formData, setFormData] = useState({
-    name: "",
-    registerNumber: "",
-    department: "",
-    year: "",
-    eventName: "",
-    labName: "",
-    labInchargeId: "",
-    labInchargeName: "",
-    items: [{ itemName: "", quantity: "" }],
+    event_id: "",
+    special_lab_id: "",
+    items: [{ material_id: "", quantity: "" }],
   });
+
+  // 🔹 Fetch Initial Data
+  useEffect(() => {
+    const studentId = 2; // later get from JWT
+
+    fetch(`http://localhost:5000/api/form/students/${studentId}`)
+      .then((res) => res.json())
+      .then((data) => setStudent(data));
+
+    fetch("http://localhost:5000/api/form/events")
+      .then((res) => res.json())
+      .then((data) => setEvents(data));
+
+    fetch("http://localhost:5000/api/form/labs")
+      .then((res) => res.json())
+      .then((data) => setLabs(data));
+
+    fetch("http://localhost:5000/api/form/materials")
+      .then((res) => res.json())
+      .then((data) => setMaterialsList(data));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleItemChange = (index, field, value) => {
@@ -31,7 +48,7 @@ const HomePageContent = () => {
   const addItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { itemName: "", quantity: "" }],
+      items: [...formData.items, { material_id: "", quantity: "" }],
     });
   };
 
@@ -40,95 +57,127 @@ const HomePageContent = () => {
     setFormData({ ...formData, items: updatedItems });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
+    if (!formData.event_id || !formData.special_lab_id) {
+      alert("Please select event and lab");
+      return;
+    }
+
+    for (let item of formData.items) {
+      if (!item.material_id || !item.quantity) {
+        alert("Please select material and quantity");
+        return;
+      }
+    }
+
+    const payload = {
+      student_id: student.student_id,
+      special_lab_id: Number(formData.special_lab_id),
+      event_id: Number(formData.event_id),
+      materials: formData.items.map((item) => ({
+        material_id: Number(item.material_id),
+        quantity: Number(item.quantity),
+      })),
+    };
+    console.log(payload);
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/requests/create",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (response.ok) {
+        alert("Request submitted successfully!");
+      } else {
+        alert("Error submitting request");
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  if (!student) return <h3>Loading...</h3>;
 
   return (
     <div className="form-page">
       <form className="material-form" onSubmit={handleSubmit}>
         <h2>Materials Request Form</h2>
 
-        {/* Two-column layout */}
+        {/* Student Info (Read Only) */}
         <div className="grid-form">
           <div className="form-group">
             <label>Name</label>
-            <input name="name" value={formData.name} onChange={handleChange} />
+            <input value={student.name} disabled />
           </div>
 
           <div className="form-group">
             <label>Register Number</label>
-            <input
-              name="registerNumber"
-              value={formData.registerNumber}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Department</label>
-            <input
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Year</label>
-            <input name="year" value={formData.year} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label>Event Name</label>
-            <input
-              name="eventName"
-              value={formData.eventName}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Special Lab Name</label>
-            <input
-              name="labName"
-              value={formData.labName}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Lab Incharge ID</label>
-            <input
-              name="labInchargeId"
-              value={formData.labInchargeId}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Lab Incharge Name</label>
-            <input
-              name="labInchargeName"
-              value={formData.labInchargeName}
-              onChange={handleChange}
-            />
+            <input value={student.reg_no} disabled />
           </div>
         </div>
 
-        {/* Items */}
-        <h3 className="section-title">Requested Items</h3>
+        {/* Event Dropdown */}
+        <div className="form-group">
+          <label>Event</label>
+          <select
+            name="event_id"
+            value={formData.event_id}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Event</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Lab Dropdown */}
+        <div className="form-group">
+          <label>Special Lab</label>
+          <select
+            name="special_lab_id"
+            value={formData.special_lab_id}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Lab</option>
+            {labs.map((lab) => (
+              <option key={lab.speciallab_id} value={lab.speciallab_id}>
+                {lab.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Materials */}
+        <h3>Requested Items</h3>
 
         {formData.items.map((item, index) => (
           <div className="item-row" key={index}>
-            <input
-              placeholder="Item Name"
-              value={item.itemName}
+            <select
+              value={item.material_id}
               onChange={(e) =>
-                handleItemChange(index, "itemName", e.target.value)
+                handleItemChange(index, "material_id", e.target.value)
               }
-            />
+              required
+            >
+              <option value="">Select Material</option>
+              {Array.isArray(materialsList) &&
+                materialsList.map((material) => (
+                  <option key={material.id} value={material.id}>
+                    {material.name}
+                  </option>
+                ))}
+            </select>
 
             <input
               type="number"
@@ -137,6 +186,7 @@ const HomePageContent = () => {
               onChange={(e) =>
                 handleItemChange(index, "quantity", e.target.value)
               }
+              required
             />
 
             {formData.items.length > 1 && (
@@ -155,7 +205,7 @@ const HomePageContent = () => {
           + Add Item
         </button>
 
-        <button className="submit-btn" type="submit">
+        <button type="submit" className="submit-btn">
           Submit Request
         </button>
       </form>
