@@ -51,10 +51,18 @@ function App() {
             }
           />
           <Route
+            path="/staffdashboard"
+            element={
+              <ProtectedRoutes allowedRoles={["LAB_INCHARGE"]}>
+                <StaffDashboard/>    
+              </ProtectedRoutes>
+            }
+          />
+          <Route
             path="/storedashboard"
             element={
               <ProtectedRoutes allowedRoles={["STORE_ADMIN"]}>
-                <StaffDashboard/>    
+                <AdminDashboard/>    
               </ProtectedRoutes>
             }
           />

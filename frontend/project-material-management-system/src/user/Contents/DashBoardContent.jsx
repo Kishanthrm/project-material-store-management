@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import "./DashBoard.css";
 
 import Accordion from "@mui/material/Accordion";
@@ -13,14 +13,42 @@ import profileImg from "../../assets/download.jpg";
 
 const DashBoardContent = () => {
   const [expanded, setExpanded] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [completedRequests, setCompletedRequests] = useState([]);
 
   const handleChange = (panel) => (e, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
+  /* ===== FETCH REQUESTS ===== */
+  useEffect(() => {
+    fetch("http://localhost:5000/api/requests/pending")
+      .then((res) => res.json())
+      .then((data) => setPendingRequests(data))
+      .catch((err) => console.error(err));
+
+    fetch("http://localhost:5000/api/requests/completed")
+      .then((res) => res.json())
+      .then((data) => setCompletedRequests(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  /* ===== FETCH PROFILE ===== */
+  useEffect(() => {
+    const studentId = 2;
+
+    fetch(`http://localhost:5000/api/users/profile/${studentId}`)
+      .then((res) => res.json())
+      .then((data) => setProfile(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  if (!profile) return <h3>Loading...</h3>;
+
   return (
     <>
-      {/* ===== PROFILE CARD ===== */}
+      {/* ================= PROFILE CARD ================= */}
       <div className="profile-card">
         <div className="profile-top">
           <div className="profile-img">
@@ -29,10 +57,10 @@ const DashBoardContent = () => {
 
           <div className="profile-basic">
             <div>
-              <strong>Name:</strong> <span>Kishanth</span>
+              <strong>Name:</strong> <span>{profile.name}</span>
             </div>
             <div>
-              <strong>Register Number:</strong> <span>7376231MZ118</span>
+              <strong>Register Number:</strong> <span>{profile.reg_no}</span>
             </div>
           </div>
         </div>
@@ -42,13 +70,15 @@ const DashBoardContent = () => {
         <div className="profile-bottom">
           <div className="profile-left">
             <div>
-              <strong>Department:</strong> <span>Mechatronics</span>
+              <strong>Department:</strong>{" "}
+              <span>{profile.department_name}</span>
             </div>
             <div>
-              <strong>Semester:</strong> <span>IV</span>
+              <strong>Semester:</strong> <span>{profile.semester}</span>
             </div>
             <div>
-              <strong>Special Lab Incharge:</strong> <span>XYZ</span>
+              <strong>Special Lab Incharge:</strong>{" "}
+              <span>{profile.lab_incharge_name}</span>
             </div>
           </div>
 
@@ -56,118 +86,119 @@ const DashBoardContent = () => {
 
           <div className="profile-right">
             <div>
-              <strong>Year:</strong> <span>3</span>
+              <strong>Year:</strong> <span>{profile.year}</span>
             </div>
             <div>
-              <strong>Special Lab:</strong> <span>XYZ</span>
+              <strong>Special Lab:</strong> <span>{profile.lab_name}</span>
             </div>
             <div>
-              <strong>No. of Requests:</strong> <span>3</span>
+              <strong>No. of Requests:</strong>{" "}
+              <span>{profile.total_requests}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ===== PENDING REQUESTS ===== */}
+      {/* ================= PENDING REQUESTS ================= */}
       <div className="profile-card pending-section">
         <Typography variant="h6" gutterBottom>
           Pending Requests
         </Typography>
 
-        <Accordion
-          expanded={expanded === "pending-1"}
-          onChange={handleChange("pending-1")}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <div className="pending-summary">
-              <span>
-                <strong>Event:</strong> Robotics Workshop
-              </span>
-              <span>
-                <strong>Materials:</strong> 5
-              </span>
-              <span>
-                <strong>Remarks:</strong> Waiting approval
-              </span>
-              <span>
-                <strong>Time:</strong> 12 Feb 2026, 10:30 AM
-              </span>
-              <IconButton size="small" onClick={(e) => e.stopPropagation()}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </div>
-          </AccordionSummary>
-          <AccordionDetails>
-            Arduino Uno x 2 <br />
-            Servo Motor x 4 <br />
-            Jumper Wires x 10
-          </AccordionDetails>
-        </Accordion>
+        {pendingRequests.map((request) => (
+          <Accordion
+            key={request.id}
+            expanded={expanded === request.id}
+            onChange={handleChange(request.id)}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <div className="pending-summary">
+                <span>
+                  <strong>Event:</strong> {request.event_name}
+                </span>
+                <span>
+                  <strong>Materials:</strong> {request.materials_count}
+                </span>
+                <span>
+                  <strong>Status:</strong> {request.status}
+                </span>
+                <span>
+                  <strong>Time:</strong>{" "}
+                  {new Date(request.time).toLocaleString()}
+                </span>
 
-        <Accordion
-          expanded={expanded === "pending-2"}
-          onChange={handleChange("pending-2")}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <div className="pending-summary">
-              <span>
-                <strong>Event:</strong> IoT Hackathon
-              </span>
-              <span>
-                <strong>Materials:</strong> 3
-              </span>
-              <span>
-                <strong>Remarks:</strong> Waiting delivery
-              </span>
-              <span>
-                <strong>Time:</strong> 10 Feb 2026, 2:00 PM
-              </span>
-              <IconButton size="small" onClick={(e) => e.stopPropagation()}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </div>
-          </AccordionSummary>
-          <AccordionDetails>
-            Breadboard x 1 <br />
-            Sensor Module x 2
-          </AccordionDetails>
-        </Accordion>
+                <span
+                  className="edit-icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("Edit clicked");
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </span>
+              </div>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              {request.materials_list?.map((material, index) => (
+                <div key={index}>
+                  {material.material_name} x {material.quantity}
+                </div>
+              ))}
+            </AccordionDetails>
+          </Accordion>
+        ))}
       </div>
 
-      {/* ===== COMPLETED REQUESTS ===== */}
+      {/* ================= COMPLETED REQUESTS ================= */}
       <div className="profile-card completed-section">
         <Typography variant="h6" gutterBottom>
           Completed Requests
         </Typography>
 
-        <Accordion
-          expanded={expanded === "completed-1"}
-          onChange={handleChange("completed-1")}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <div className="pending-summary">
-              <span>
-                <strong>Event:</strong> Robotics Workshop
-              </span>
-              <span>
-                <strong>Materials:</strong> 5
-              </span>
-              <span>
-                <strong>Remarks:</strong> Completed
-              </span>
-              <span>
-                <strong>Time:</strong> 12 Feb 2026, 10:30 AM
-              </span>
-              <IconButton size="small" onClick={(e) => e.stopPropagation()}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </div>
-          </AccordionSummary>
-          <AccordionDetails>
-            Arduino Uno x 2 <br />
-            Servo Motor x 4
-          </AccordionDetails>
-        </Accordion>
+        {completedRequests.map((request) => (
+          <Accordion
+            key={request.id}
+            expanded={expanded === request.id}
+            onChange={handleChange(request.id)}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <div className="pending-summary">
+                <span>
+                  <strong>Event:</strong> {request.event_name}
+                </span>
+                <span>
+                  <strong>Materials:</strong> {request.materials_count}
+                </span>
+                <span>
+                  <strong>Status:</strong> {request.status}
+                </span>
+                <span>
+                  <strong>Time:</strong>{" "}
+                  {new Date(request.time).toLocaleString()}
+                </span>
+
+                <span
+                  className="edit-icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("Edit clicked");
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </span>
+              </div>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              {request.materials_list?.map((material, index) => (
+                <div key={index}>
+                  {material.material_name} x {material.quantity}
+                </div>
+              ))}
+            </AccordionDetails>
+          </Accordion>
+        ))}
       </div>
     </>
   );
