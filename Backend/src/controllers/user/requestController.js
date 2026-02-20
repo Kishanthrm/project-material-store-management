@@ -1,42 +1,32 @@
-const pool = require("../config/db");
+const pool = require("../../config/db");
 
 // Get Pending Requests
 const getPendingRequests = async (req, res) => {
+  const { id } = req.params;
+
   try {
     const result = await pool.query(`
       SELECT 
-    r.id,
-    e.name AS event_name,
-    r.status,
-    r.request_time AS time,
-
-    COUNT(rm.id) AS materials_count,
-
-    JSON_AGG(
-        JSON_BUILD_OBJECT(
+        r.id,
+        e.name AS event_name,
+        r.status,
+        r.request_time AS time,
+        COUNT(rm.id) AS materials_count,
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
             'material_name', m.name,
             'quantity', rm.quantity
-        )
-    ) FILTER (WHERE m.id IS NOT NULL) AS materials_list
-
-FROM request r
-
-JOIN event e 
-    ON e.id = r.event_id
-
-LEFT JOIN request_material rm 
-    ON rm.request_id = r.id
-
-LEFT JOIN material m 
-    ON m.id = rm.material_id
-
-WHERE r.status = 'PENDING'
-
-GROUP BY r.id, e.name, r.status, r.request_time
-
-ORDER BY r.request_time DESC;
-
-    `);
+          )
+        ) FILTER (WHERE m.id IS NOT NULL) AS materials_list
+      FROM request r
+      JOIN event e ON e.id = r.event_id
+      LEFT JOIN request_material rm ON rm.request_id = r.id
+      LEFT JOIN material m ON m.id = rm.material_id
+      WHERE r.status IN ('PENDING', 'STAFF_APPROVED')
+        AND r.student_id = $1   
+      GROUP BY r.id, e.name, r.status, r.request_time
+      ORDER BY r.request_time DESC
+    `, [id]);
 
     res.json(result.rows);
   } catch (error) {
@@ -44,43 +34,34 @@ ORDER BY r.request_time DESC;
   }
 };
 
+
 // Get Completed Requests
 const getCompletedRequests = async (req, res) => {
+  const { id } = req.params;
+
   try {
     const result = await pool.query(`
       SELECT 
-    r.id,
-    e.name AS event_name,
-    r.status,
-    r.request_time AS time,
-
-    COUNT(rm.id) AS materials_count,
-
-    JSON_AGG(
-        JSON_BUILD_OBJECT(
+        r.id,
+        e.name AS event_name,
+        r.status,
+        r.request_time AS time,
+        COUNT(rm.id) AS materials_count,
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
             'material_name', m.name,
             'quantity', rm.quantity
-        )
-    ) FILTER (WHERE m.id IS NOT NULL) AS materials_list
-
-FROM request r
-
-JOIN event e 
-    ON e.id = r.event_id
-
-LEFT JOIN request_material rm 
-    ON rm.request_id = r.id
-
-LEFT JOIN material m 
-    ON m.id = rm.material_id
-
-WHERE r.status = 'COMPLETED'
-
-GROUP BY r.id, e.name, r.status, r.request_time
-
-ORDER BY r.request_time DESC;
-
-    `);
+          )
+        ) FILTER (WHERE m.id IS NOT NULL) AS materials_list
+      FROM request r
+      JOIN event e ON e.id = r.event_id
+      LEFT JOIN request_material rm ON rm.request_id = r.id
+      LEFT JOIN material m ON m.id = rm.material_id
+      WHERE r.status = 'COMPLETED'
+        AND r.student_id = $1   
+      GROUP BY r.id, e.name, r.status, r.request_time
+      ORDER BY r.request_time DESC
+    `, [id]);
 
     res.json(result.rows);
   } catch (error) {
@@ -94,7 +75,6 @@ const createRequest = async (req, res) => {
   try {
     await pool.query("BEGIN");
 
-    // Insert into request table
     const requestResult = await pool.query(
       `INSERT INTO request 
        (student_id, special_lab_id, request_time, status, event_id)
@@ -105,13 +85,12 @@ const createRequest = async (req, res) => {
 
     const requestId = requestResult.rows[0].id;
 
-    // Insert materials
     for (let item of materials) {
       await pool.query(
         `INSERT INTO request_material
-         (material_id, quantity)
-         VALUES ($1, $2)`,
-        [item.material_id, item.quantity]
+         (request_id, material_id, quantity)
+         VALUES ($1, $2, $3)`,
+        [requestId, item.material_id, item.quantity]
       );
     }
 

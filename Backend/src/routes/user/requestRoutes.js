@@ -5,10 +5,10 @@
     getPendingRequests,
     getCompletedRequests,
     createRequest,
-  } = require("../controllers/requestController");
+  } = require("../../controllers/user/requestController");
 
-  router.get("/pending", getPendingRequests);
-  router.get("/completed", getCompletedRequests);
+  router.get("/pending/:id", getPendingRequests);
+  router.get("/completed/:id", getCompletedRequests);
   router.post("/create", createRequest);
 
   module.exports = router;

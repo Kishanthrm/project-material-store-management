@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -8,6 +8,7 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import "./MaterialList.css";
 
@@ -15,32 +16,29 @@ import "./MaterialList.css";
 const columns = [
   { id: "name", label: "Material Name", minWidth: 170 },
   { id: "code", label: "Material Code", minWidth: 120 },
-  { id: "quantity", label: "Quantity", minWidth: 100, align: "right" },
   { id: "category", label: "Category", minWidth: 150 },
 ];
 
-/* ---------- Table Data ---------- */
-const rows = [
-  {
-    name: "Arduino Uno",
-    code: "ARD-001",
-    quantity: 10,
-    category: "Controller",
-  },
-  { name: "Servo Motor", code: "SRV-010", quantity: 25, category: "Motor" },
-  { name: "Jumper Wires", code: "JMP-100", quantity: 200, category: "Wires" },
-  {
-    name: "Breadboard",
-    code: "BRD-005",
-    quantity: 15,
-    category: "Prototyping",
-  },
-  { name: "Sensor Module", code: "SNS-020", quantity: 30, category: "Sensors" },
-];
-
 const MaterialListContent = () => {
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  /* 🔹 Fetch Materials from Backend */
+  useEffect(() => {
+    fetch("http://localhost:5000/api/material/list")
+      .then((res) => res.json())
+      .then((data) => {
+        setMaterials(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching materials:", err);
+        setLoading(false);
+      });
+  }, []);
 
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
@@ -57,47 +55,58 @@ const MaterialListContent = () => {
         List of Materials
       </Typography>
 
-      <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align || "left"}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  <strong>{column.label}</strong>
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row, index) => (
-                <TableRow hover key={index}>
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "30px" }}>
+          <CircularProgress />
+        </div>
+      ) : (
+        <>
+          <TableContainer sx={{ maxHeight: 440 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
                   {columns.map((column) => (
-                    <TableCell key={column.id} align={column.align || "left"}>
-                      {row[column.id]}
+                    <TableCell
+                      key={column.id}
+                      align={column.align || "left"}
+                      style={{ minWidth: column.minWidth }}
+                    >
+                      <strong>{column.label}</strong>
                     </TableCell>
                   ))}
                 </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              </TableHead>
 
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={rows.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
+              <TableBody>
+                {materials
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row, index) => (
+                    <TableRow hover key={row.id || index}>
+                      {columns.map((column) => (
+                        <TableCell
+                          key={column.id}
+                          align={column.align || "left"}
+                        >
+                          {row[column.id]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={materials.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </>
+      )}
     </Paper>
   );
 };

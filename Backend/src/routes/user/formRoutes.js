@@ -3,14 +3,12 @@
 
   const {
     getEvents,
-    getLabs,
     getMaterials,
     getStudentById,
-  } = require("../controllers/formController");
+  } = require("../../controllers/user/formController");
 
   router.get("/students/:id", getStudentById);
   router.get("/events", getEvents);
-  router.get("/labs", getLabs);
   router.get("/materials", getMaterials);
 
   module.exports = router;
