@@ -4,7 +4,6 @@ import "./HomePage.css";
 const HomePageContent = () => {
   const [student, setStudent] = useState(null);
   const [events, setEvents] = useState([]);
-  const [labs, setLabs] = useState([]);
   const [materialsList, setMaterialsList] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -13,21 +12,21 @@ const HomePageContent = () => {
     items: [{ material_id: "", quantity: "" }],
   });
 
-  // 🔹 Fetch Initial Data
+  // Fetch Initial Data
   useEffect(() => {
-    const studentId = 2; // later get from JWT
+    const studentId = 2; 
 
     fetch(`http://localhost:5000/api/form/students/${studentId}`)
       .then((res) => res.json())
-      .then((data) => setStudent(data));
+      .then((data) => {
+        console.log(data);
+
+        setStudent(data)
+      });      
 
     fetch("http://localhost:5000/api/form/events")
       .then((res) => res.json())
       .then((data) => setEvents(data));
-
-    fetch("http://localhost:5000/api/form/labs")
-      .then((res) => res.json())
-      .then((data) => setLabs(data));
 
     fetch("http://localhost:5000/api/form/materials")
       .then((res) => res.json())
@@ -59,7 +58,7 @@ const HomePageContent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.event_id || !formData.special_lab_id) {
+    if (!formData.event_id) {
       alert("Please select event and lab");
       return;
     }
@@ -73,7 +72,7 @@ const HomePageContent = () => {
 
     const payload = {
       student_id: student.student_id,
-      special_lab_id: Number(formData.special_lab_id),
+      special_lab_id: student.speciallab_id,
       event_id: Number(formData.event_id),
       materials: formData.items.map((item) => ({
         material_id: Number(item.material_id),
@@ -135,27 +134,15 @@ const HomePageContent = () => {
             {events.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.name}
-              </option>
+              </option> //frontend recieves data from backend and list the data in dropdown using option , it is stored in order of value = id and user to see = name, if the user selects a lab the id is stored in usestate and react re-render the page with showing the lab with selected id in dropdown
             ))}
           </select>
         </div>
 
-        {/* Lab Dropdown */}
+        {/* Lab */}
         <div className="form-group">
           <label>Special Lab</label>
-          <select
-            name="special_lab_id"
-            value={formData.special_lab_id}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Lab</option>
-            {labs.map((lab) => (
-              <option key={lab.speciallab_id} value={lab.speciallab_id}>
-                {lab.name}
-              </option>
-            ))}
-          </select>
+          <input value={student.special_lab_name} disabled />
         </div>
 
         {/* Materials */}

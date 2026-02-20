@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../config/db");
 
 const getStudentById = async (req, res) => {
   const { id } = req.params; 
@@ -13,6 +13,7 @@ const getStudentById = async (req, res) => {
         s.year,
         s.semester,
         d.name AS department_name,
+        sl.speciallab_id,
         sl.name AS special_lab_name
       FROM student s
       JOIN department d ON d.department_id = s.department_id
@@ -51,23 +52,6 @@ const getEvents = async (req, res) => {
   }
 };
 
-// ================= GET SPECIAL LABS =================
-const getLabs = async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT speciallab_id, name
-      FROM special_lab
-      ORDER BY name ASC
-    `);
-
-    res.status(200).json(result.rows);
-
-  } catch (error) {
-    console.error("Error fetching labs:", error);
-    res.status(500).json({ error: "Failed to fetch labs" });
-  }
-};
-
 // ================= GET MATERIALS =================
 const getMaterials = async (req, res) => {
   try {
@@ -87,7 +71,6 @@ const getMaterials = async (req, res) => {
 
 module.exports = {
   getEvents,
-  getLabs,
   getMaterials,
   getStudentById,
 };

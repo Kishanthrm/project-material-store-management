@@ -21,20 +21,7 @@ const DashBoardContent = () => {
     setExpanded(isExpanded ? panel : false);
   };
 
-  /* ===== FETCH REQUESTS ===== */
-  useEffect(() => {
-    fetch("http://localhost:5000/api/requests/pending")
-      .then((res) => res.json())
-      .then((data) => setPendingRequests(data))
-      .catch((err) => console.error(err));
-
-    fetch("http://localhost:5000/api/requests/completed")
-      .then((res) => res.json())
-      .then((data) => setCompletedRequests(data))
-      .catch((err) => console.error(err));
-  }, []);
-
-  /* ===== FETCH PROFILE ===== */
+  /* ===== FETCH ===== */
   useEffect(() => {
     const studentId = 2;
 
@@ -42,6 +29,17 @@ const DashBoardContent = () => {
       .then((res) => res.json())
       .then((data) => setProfile(data))
       .catch((err) => console.error(err));
+
+    fetch(`http://localhost:5000/api/requests/pending/${studentId}`)
+      .then((res) => res.json())
+      .then((data) => setPendingRequests(data))
+      .catch((err) => console.error(err));
+
+    fetch(`http://localhost:5000/api/requests/completed/${studentId}`)
+      .then((res) => res.json())
+      .then((data) => setCompletedRequests(data))
+      .catch((err) => console.error(err));
+
   }, []);
 
   if (!profile) return <h3>Loading...</h3>;
