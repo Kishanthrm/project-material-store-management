@@ -2,7 +2,7 @@ const pool = require("../../config/db");
 
 /* ================= GET PENDING REQUESTS ================= */
 const getPendingRequests = async (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
   try {
     const result = await pool.query(
       `
@@ -51,16 +51,15 @@ const getPendingRequests = async (req, res) => {
 
       ORDER BY r.request_time DESC
       `,
-      [id]
+      [id],
     );
-    
+
     res.json(result.rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
-
 
 /* ================= GET COMPLETED REQUESTS ================= */
 const getCompletedRequests = async (req, res) => {
@@ -116,7 +115,7 @@ const getCompletedRequests = async (req, res) => {
 
       ORDER BY r.request_time DESC
       `,
-      [id]
+      [id],
     );
 
     res.json(result.rows);
@@ -127,7 +126,7 @@ const getCompletedRequests = async (req, res) => {
 };
 
 const updateRequestStatus = async (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
   const { status, remarks } = req.body;
 
   try {
@@ -140,7 +139,7 @@ const updateRequestStatus = async (req, res) => {
       SET status = $1
       WHERE id = $2
       `,
-      [status, id]
+      [status, id],
     );
 
     // Save remarks in request_material (optional)
@@ -151,14 +150,36 @@ const updateRequestStatus = async (req, res) => {
         SET lab_incharge_remarks = $1
         WHERE request_id = $2
         `,
-        [remarks, id]
+        [remarks, id],
       );
     }
 
     await pool.query("COMMIT");
 
-    res.json({ message: "Status updated successfully" });
+    const io = req.app.get("io");
 
+    const studentResult = await pool.query(
+      `SELECT student_id FROM request WHERE id = $1`,
+      [id],
+    );
+
+    const studentId = studentResult.rows[0].student_id;
+
+    io.to(studentId.toString()).emit("requestStatusUpdated", {
+      requestId: id,
+      status: status,
+    }); 
+    
+    //io.to(roomName) → send only to that room
+    // .emit(eventName, data) → send event
+    // Event name: "requestStatusUpdated"
+    // Data sent:
+    // {
+    //   requestId: id,
+    //   status: status
+    // }
+
+    res.json({ message: "Status updated successfully" });
   } catch (error) {
     await pool.query("ROLLBACK");
     console.error(error);
