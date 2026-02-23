@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 import "./DashBoard.css";
 
 import Accordion from "@mui/material/Accordion";
@@ -7,9 +8,10 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
-import IconButton from "@mui/material/IconButton";
 
 import profileImg from "../../assets/download.jpg";
+
+const socket = io("http://localhost:5000"); // Connects to backend socket server.
 
 const DashBoardContent = () => {
   const [expanded, setExpanded] = useState(false);
@@ -17,29 +19,64 @@ const DashBoardContent = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [completedRequests, setCompletedRequests] = useState([]);
 
+  const studentId = 2; // later replace with JWT value
+
   const handleChange = (panel) => (e, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
-  /* ===== FETCH ===== */
+  /* ================= FETCH FUNCTIONS ================= */
+
+  const fetchProfile = async () => {
+    const res = await fetch(
+      `http://localhost:5000/api/users/profile/${studentId}`
+    );
+    const data = await res.json();
+    setProfile(data);
+  };
+
+  const fetchPending = async () => {
+    const res = await fetch(
+      `http://localhost:5000/api/requests/pending/${studentId}`
+    );
+    const data = await res.json();
+    setPendingRequests(data);
+  };
+
+  const fetchCompleted = async () => {
+    const res = await fetch(
+      `http://localhost:5000/api/requests/completed/${studentId}`
+    );
+    const data = await res.json();
+    setCompletedRequests(data);
+  };
+
+  /* ================= INITIAL LOAD ================= */
+
   useEffect(() => {
-    const studentId = 2;
+    fetchProfile();
+    fetchPending();
+    fetchCompleted();
+  }, []);
 
-    fetch(`http://localhost:5000/api/users/profile/${studentId}`)
-      .then((res) => res.json())
-      .then((data) => setProfile(data))
-      .catch((err) => console.error(err));
+  /* ================= SOCKET LISTENER ================= */
 
-    fetch(`http://localhost:5000/api/requests/pending/${studentId}`)
-      .then((res) => res.json())
-      .then((data) => setPendingRequests(data))
-      .catch((err) => console.error(err));
+  useEffect(() => {
+    // Join room using studentId
+    socket.emit("joinRoom", studentId.toString());
 
-    fetch(`http://localhost:5000/api/requests/completed/${studentId}`)
-      .then((res) => res.json())
-      .then((data) => setCompletedRequests(data))
-      .catch((err) => console.error(err));
+    // Listen for real-time update
+    socket.on("requestStatusUpdated", (data) => {
+      console.log("Status updated in real-time:", data);
 
+      // Refetch updated data
+      fetchPending();
+      fetchCompleted();
+    });
+
+    return () => {
+      socket.off("requestStatusUpdated");
+    };
   }, []);
 
   if (!profile) return <h3>Loading...</h3>;
@@ -58,7 +95,8 @@ const DashBoardContent = () => {
               <strong>Name:</strong> <span>{profile.name}</span>
             </div>
             <div>
-              <strong>Register Number:</strong> <span>{profile.reg_no}</span>
+              <strong>Register Number:</strong>{" "}
+              <span>{profile.reg_no}</span>
             </div>
           </div>
         </div>
@@ -87,7 +125,8 @@ const DashBoardContent = () => {
               <strong>Year:</strong> <span>{profile.year}</span>
             </div>
             <div>
-              <strong>Special Lab:</strong> <span>{profile.lab_name}</span>
+              <strong>Special Lab:</strong>{" "}
+              <span>{profile.lab_name}</span>
             </div>
             <div>
               <strong>No. of Requests:</strong>{" "}
@@ -115,7 +154,8 @@ const DashBoardContent = () => {
                   <strong>Event:</strong> {request.event_name}
                 </span>
                 <span>
-                  <strong>Materials:</strong> {request.materials_count}
+                  <strong>Materials:</strong>{" "}
+                  {request.materials_count}
                 </span>
                 <span>
                   <strong>Status:</strong> {request.status}
@@ -123,16 +163,6 @@ const DashBoardContent = () => {
                 <span>
                   <strong>Time:</strong>{" "}
                   {new Date(request.time).toLocaleString()}
-                </span>
-
-                <span
-                  className="edit-icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("Edit clicked");
-                  }}
-                >
-                  <EditIcon fontSize="small" />
                 </span>
               </div>
             </AccordionSummary>
@@ -166,7 +196,8 @@ const DashBoardContent = () => {
                   <strong>Event:</strong> {request.event_name}
                 </span>
                 <span>
-                  <strong>Materials:</strong> {request.materials_count}
+                  <strong>Materials:</strong>{" "}
+                  {request.materials_count}
                 </span>
                 <span>
                   <strong>Status:</strong> {request.status}
@@ -174,16 +205,6 @@ const DashBoardContent = () => {
                 <span>
                   <strong>Time:</strong>{" "}
                   {new Date(request.time).toLocaleString()}
-                </span>
-
-                <span
-                  className="edit-icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("Edit clicked");
-                  }}
-                >
-                  <EditIcon fontSize="small" />
                 </span>
               </div>
             </AccordionSummary>
