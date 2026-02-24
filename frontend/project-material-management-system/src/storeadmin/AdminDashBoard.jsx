@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./DashBoard.css";
 
 import Accordion from "@mui/material/Accordion";
@@ -12,18 +12,121 @@ import Header from "../staff/components/Header";
 
 const AdminDashBoard = () => {
   const [expanded, setExpanded] = useState(false);
+  const [adminData, setAdminData] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [completedRequests, setCompletedRequests] = useState([]);
+  const [remarksMap, setRemarksMap] = useState({});
 
-  const handleChange = (panel) => (e, isExpanded) => {
+  // ===============================
+  // Fetch Admin Profile
+  // ===============================
+  useEffect(() => {
+    fetch("http://localhost:5000/api/storeadmin/profile")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        return res.json();
+      })
+      .then((data) => setAdminData(data.data))
+      .catch((err) => console.error("Profile error:", err));
+  }, []);
+
+  // ===============================
+  // Fetch Requests
+  // ===============================
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const pendingRes = await fetch(
+          "http://localhost:5000/api/storeadmin/requests/pending",
+        );
+        if (!pendingRes.ok) throw new Error("Failed to fetch pending requests");
+        const pendingData = await pendingRes.json();
+        setPendingRequests(pendingData);
+
+        const completedRes = await fetch(
+          "http://localhost:5000/api/storeadmin/requests/completed",
+        );
+        if (!completedRes.ok)
+          throw new Error("Failed to fetch completed requests");
+        const completedData = await completedRes.json();
+        setCompletedRequests(completedData);
+      } catch (err) {
+        console.error("Request fetch error:", err);
+      }
+    };
+
+    fetchRequests();
+  }, []);
+
+  // ===============================
+  // Update Status
+  // ===============================
+  const handleStatusUpdate = async (requestId, status) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/storeadmin/requests/update-status/${requestId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status,
+            remarks: remarksMap[requestId] || "",
+            deliveryDate: remarksMap[`delivery_${requestId}`] || null,
+          }),
+        },
+      );
+
+      if (!response.ok) throw new Error("Update failed");
+
+      const updated = pendingRequests.find((r) => r.id === requestId);
+
+      // 🔵 APPROVED → Stay in Pending, just update UI
+      if (status === "APPROVED") {
+        setPendingRequests((prev) =>
+          prev.map((r) =>
+            r.id === requestId
+              ? {
+                  ...r,
+                  status: "APPROVED",
+                  delivery_date: remarksMap[`delivery_${requestId}`],
+                }
+              : r,
+          ),
+        );
+      }
+
+      // 🟢 ISSUED or 🔴 REJECTED → Move to Completed
+      if (status === "ISSUED" || status === "REJECTED") {
+        setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+
+        setCompletedRequests((prev) => [
+          {
+            ...updated,
+            status,
+            store_remarks: remarksMap[requestId],
+            delivery_date: remarksMap[`delivery_${requestId}`],
+          },
+          ...prev,
+        ]);
+      }
+
+      alert("Updated successfully");
+    } catch (err) {
+      console.error("Update error:", err);
+    }
+  };
+  const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
+
+  if (!adminData) return <h3>Loading...</h3>;
 
   return (
     <>
       <Header />
 
-      {/* ===== MAIN CONTENT WRAPPER ===== */}
       <div className="admin-dashboard-content">
-        {/* ===== STORE ADMIN PROFILE CARD ===== */}
+        {/* ================= PROFILE CARD ================= */}
         <div className="profile-card">
           <div className="profile-top">
             <div className="profile-img">
@@ -32,13 +135,14 @@ const AdminDashBoard = () => {
 
             <div className="profile-basic">
               <div>
-                <strong>Name:</strong> <span>Mr. Rajesh Kumar</span>
+                <strong>Name:</strong> <span>{adminData.name}</span>
               </div>
               <div>
-                <strong>Employee ID:</strong> <span>ST-ADM-102</span>
+                <strong>Employee ID:</strong>{" "}
+                <span>{adminData.employee_id}</span>
               </div>
               <div>
-                <strong>Role:</strong> <span>Store Admin</span>
+                <strong>Role:</strong> <span>{adminData.role}</span>
               </div>
             </div>
           </div>
@@ -48,13 +152,7 @@ const AdminDashBoard = () => {
           <div className="profile-bottom">
             <div className="profile-left">
               <div>
-                <strong>Store / Lab:</strong> <span>Central Project Store</span>
-              </div>
-              <div>
-                <strong>Email:</strong> <span>storeadmin@college.edu</span>
-              </div>
-              <div>
-                <strong>Phone:</strong> <span>+91 98765 43210</span>
+                <strong>Email:</strong> <span>{adminData.email}</span>
               </div>
             </div>
 
@@ -62,132 +160,159 @@ const AdminDashBoard = () => {
 
             <div className="profile-right">
               <div>
-                <strong>Total Requests Handled:</strong> <span>148</span>
+                <strong>Total Requests:</strong>{" "}
+                <span>{adminData.total_requests}</span>
               </div>
               <div>
-                <strong>Pending Deliveries:</strong> <span>6</span>
+                <strong>Pending Deliveries:</strong>{" "}
+                <span>{adminData.pending_deliveries}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ===== REQUESTS WAITING FOR STORE ACTION ===== */}
+        {/* ================= PENDING REQUESTS ================= */}
         <div className="profile-card pending-section">
           <Typography variant="h6" gutterBottom>
             Requests Waiting for Store Action
           </Typography>
 
-          <Accordion
-            expanded={expanded === "pending-1"}
-            onChange={handleChange("pending-1")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <div className="pending-summary">
-                <span>
-                  <strong>Student:</strong> Kishanth
-                </span>
-                <span>
-                  <strong>Event:</strong> Robotics Workshop
-                </span>
-                <span>
-                  <strong>Date:</strong> 12 Feb 2026
-                </span>
-                <span>
-                  <strong>Lab Approval:</strong> Approved
-                </span>
-                <span>
-                  <strong>Materials:</strong> 5
-                </span>
-              </div>
-            </AccordionSummary>
+          {pendingRequests.map((req) => (
+            <Accordion
+              key={req.id}
+              expanded={expanded === `pending-${req.id}`}
+              onChange={handleChange(`pending-${req.id}`)}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <div className="pending-summary">
+                  <span>
+                    <strong>Student:</strong> {req.student_name}
+                  </span>
+                  <span>
+                    <strong>Event:</strong> {req.event_name}
+                  </span>
+                  <span>
+                    <strong>Date:</strong>{" "}
+                    {new Date(req.request_time).toLocaleDateString()}
+                  </span>
 
-            <AccordionDetails>
-              <Typography variant="subtitle2">
-                Student & Event Details
-              </Typography>
-              <p>
-                <strong>Register No:</strong> 7376231MZ118 <br />
-                <strong>Department:</strong> Mechatronics <br />
-                <strong>Lab:</strong> Robotics Lab <br />
-                <strong>Lab In-charge:</strong> Dr. XYZ
-              </p>
-
-              <Typography variant="subtitle2">Requested Materials</Typography>
-              <ul>
-                <li>Arduino Uno — Req: 2 | Avl: 5 | Status: Available</li>
-                <li>Servo Motor — Req: 4 | Avl: 2 | Status: Partial</li>
-                <li>Jumper Wires — Req: 10 | Avl: 50 | Status: Available</li>
-              </ul>
-
-              <Typography variant="subtitle2">Store Actions</Typography>
-
-              <div className="store-actions">
-                <div>
-                  <label>Delivery Date</label>
-                  <input type="date" />
+                  {req.status === "APPROVED" && (
+                    <span className="status approved">APPROVED</span>
+                  )}
                 </div>
+              </AccordionSummary>
+
+              <AccordionDetails>
+                <strong>Requested Materials</strong>
+                <ul>
+                  {req.materials_list?.map((mat, index) => (
+                    <li key={index}>
+                      {mat.material_name} x {mat.requested_qty}
+                    </li>
+                  ))}
+                </ul>
 
                 <div>
-                  <label>Issue Type</label>
-                  <select>
-                    <option>Full Issue</option>
-                    <option>Partial Issue</option>
-                  </select>
+                  <label>Delivery Date:</label>
+                  <input
+                    type="date"
+                    onChange={(e) =>
+                      setRemarksMap({
+                        ...remarksMap,
+                        [`delivery_${req.id}`]: e.target.value,
+                      })
+                    }
+                  />
                 </div>
 
-                <div>
-                  <label>Store Remarks</label>
-                  <textarea rows="3" />
-                </div>
-              </div>
+                <textarea
+                  rows={3}
+                  placeholder="Store remarks..."
+                  value={remarksMap[req.id] || ""}
+                  onChange={(e) =>
+                    setRemarksMap({
+                      ...remarksMap,
+                      [req.id]: e.target.value,
+                    })
+                  }
+                />
 
-              <div className="action-buttons">
-                <button className="approve-btn">✅ Mark as Issued</button>
-                <button className="delay-btn">⏳ Mark as Delayed</button>
-                <button className="reject-btn">❌ Reject</button>
-              </div>
-            </AccordionDetails>
-          </Accordion>
+                <div className="action-buttons">
+                  {req.status !== "APPROVED" && (
+                    <button
+                      className="approve-btn"
+                      onClick={() => handleStatusUpdate(req.id, "APPROVED")}
+                      disabled={!remarksMap[`delivery_${req.id}`]} 
+                    >
+                      Approve
+                    </button>
+                  )}
+
+                  {req.status === "APPROVED" && (
+                    <button
+                      className="issue-btn"
+                      onClick={() => handleStatusUpdate(req.id, "ISSUED")}
+                    >
+                      Mark as Issued
+                    </button>
+                  )}
+
+                  {req.status !== "APPROVED" && (
+                    <button
+                      className="reject-btn"
+                      onClick={() => handleStatusUpdate(req.id, "REJECTED")}
+                    >
+                      Reject
+                    </button>
+                  )}
+                </div>
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </div>
 
-        {/* ===== COMPLETED REQUESTS ===== */}
+        {/* ================= COMPLETED REQUESTS ================= */}
         <div className="profile-card completed-section">
           <Typography variant="h6" gutterBottom>
             Completed Requests
           </Typography>
 
-          <Accordion
-            expanded={expanded === "completed-1"}
-            onChange={handleChange("completed-1")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <div className="pending-summary">
-                <span>
-                  <strong>Student:</strong> Kishanth
-                </span>
-                <span>
-                  <strong>Event:</strong> IoT Hackathon
-                </span>
-                <span>
-                  <strong>Date:</strong> 08 Feb 2026
-                </span>
-                <span>
-                  <strong>Status:</strong> Issued
-                </span>
-                <span>
-                  <strong>Materials:</strong> 3
-                </span>
-              </div>
-            </AccordionSummary>
+          {completedRequests.map((req) => (
+            <Accordion
+              key={req.id}
+              expanded={expanded === `completed-${req.id}`}
+              onChange={handleChange(`completed-${req.id}`)}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <div className="pending-summary">
+                  <span>
+                    <strong>Student:</strong> {req.student_name}
+                  </span>
+                  <span>
+                    <strong>Event:</strong> {req.event_name}
+                  </span>
+                  <span>
+                    <strong>Date:</strong>{" "}
+                    {new Date(req.request_time).toLocaleDateString()}
+                  </span>
+                  <span className={`status ${req.status.toLowerCase()}`}>
+                    {req.status}
+                  </span>
+                  <span>
+                    <strong>Materials:</strong> {req.materials_count}
+                  </span>
+                </div>
+              </AccordionSummary>
 
-            <AccordionDetails>
-              <Typography>
-                Materials successfully issued on <strong>09 Feb 2026</strong>.
-                <br />
-                Store Remarks: All items issued in good condition.
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
+              <AccordionDetails>
+                <Typography>
+                  <strong>Store Remarks:</strong>
+                  <br />
+                  {req.store_remarks || "No remarks"}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </div>
       </div>
     </>

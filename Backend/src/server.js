@@ -13,6 +13,9 @@ const materialRoutes = require("./routes/user/materialRoutes");
 const profileRoutes = require("./routes/staff/profileRoutes");
 const staffrequestRoutes = require("./routes/staff/staffrequestRoutes");
 
+const adminProfileRoutes = require("./routes/storeadmin/adminProfileRoutes");
+const adminRequestRoutes = require("./routes/storeadmin/adminRequestRoutes");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -46,12 +49,19 @@ io.on("connection", (socket) => {
 app.use(cors());
 app.use(express.json());
 
+//users route
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
 app.use("/api/form", formRoutes);
 app.use("/api/material", materialRoutes);
+
+//staff route
 app.use("/api/staff", profileRoutes);
 app.use("/api/staff/requests", staffrequestRoutes);
+
+//storeAdmin route
+app.use("/api/storeadmin", adminProfileRoutes);
+app.use("/api/storeadmin/requests", adminRequestRoutes);
 
 const PORT = process.env.PORT || 5000;
 
