@@ -90,12 +90,16 @@ exports.updateRequestStatus = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 🔵 APPROVED → Save delivery date
-    if (status === "APPROVED") {
-      if (!deliveryDate) {
-        throw new Error("Delivery date is required before approval");
-      }
+    // Get student_id first
+    const requestInfo = await client.query(
+      `SELECT student_id FROM request WHERE id = $1`,
+      [requestId]
+    );
 
+    const studentId = requestInfo.rows[0].student_id;
+
+    // ===== APPROVED =====
+    if (status === "APPROVED") {
       await client.query(
         `
         UPDATE request
@@ -107,7 +111,7 @@ exports.updateRequestStatus = async (req, res) => {
       );
     }
 
-    // 🟢 ISSUED
+    // ===== ISSUED =====
     if (status === "ISSUED") {
 
       const materials = await client.query(
@@ -119,40 +123,21 @@ exports.updateRequestStatus = async (req, res) => {
         [requestId]
       );
 
-      for (let item of materials.rows) {
-        await client.query(
-          `
-          UPDATE material
-          SET quantity = quantity - $1
-          WHERE id = $2
-          `,
-          [item.quantity, item.material_id]
-        );
-      }
-
       await client.query(
-        `
-        UPDATE request
-        SET status = 'ISSUED'
-        WHERE id = $1
-        `,
+        `UPDATE request SET status = 'ISSUED' WHERE id = $1`,
         [requestId]
       );
     }
 
-    // 🔴 REJECTED
+    // ===== REJECTED =====
     if (status === "REJECTED") {
       await client.query(
-        `
-        UPDATE request
-        SET status = 'REJECTED'
-        WHERE id = $1
-        `,
+        `UPDATE request SET status = 'REJECTED' WHERE id = $1`,
         [requestId]
       );
     }
 
-    // Save store remarks
+    // Update remarks
     await client.query(
       `
       UPDATE request_material
@@ -163,6 +148,13 @@ exports.updateRequestStatus = async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    // 🔥🔥🔥 EMIT SOCKET EVENT TO STUDENT
+    const io = req.app.get("io");
+    io.to(studentId.toString()).emit("requestStatusUpdated", {
+      requestId,
+      status,
+    });
 
     res.status(200).json({ message: "Updated successfully" });
 

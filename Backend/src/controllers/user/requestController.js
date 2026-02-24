@@ -22,7 +22,7 @@ const getPendingRequests = async (req, res) => {
       JOIN event e ON e.id = r.event_id
       LEFT JOIN request_material rm ON rm.request_id = r.id
       LEFT JOIN material m ON m.id = rm.material_id
-      WHERE r.status IN ('PENDING', 'STAFF_APPROVED')
+      WHERE r.status IN ('PENDING', 'STAFF_APPROVED','APPROVED')
         AND r.student_id = $1   
       GROUP BY r.id, e.name, r.status, r.request_time
       ORDER BY r.request_time DESC
@@ -57,7 +57,7 @@ const getCompletedRequests = async (req, res) => {
       JOIN event e ON e.id = r.event_id
       LEFT JOIN request_material rm ON rm.request_id = r.id
       LEFT JOIN material m ON m.id = rm.material_id
-      WHERE r.status = 'COMPLETED'
+      WHERE r.status = 'ISSUED'
         AND r.student_id = $1   
       GROUP BY r.id, e.name, r.status, r.request_time
       ORDER BY r.request_time DESC
