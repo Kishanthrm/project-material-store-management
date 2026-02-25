@@ -1,5 +1,8 @@
 const pool = require("../../config/db");
 
+const sendEmail = require("../../emailService");
+const requestApprovalTemplate = require("../../templates/requestApprovalTemplate");
+
 /* ================= GET PENDING REQUESTS ================= */
 const getPendingRequests = async (req, res) => {
   const { id } = req.params;
@@ -168,8 +171,8 @@ const updateRequestStatus = async (req, res) => {
     io.to(studentId.toString()).emit("requestStatusUpdated", {
       requestId: id,
       status: status,
-    }); 
-    
+    });
+
     //io.to(roomName) → send only to that room
     // .emit(eventName, data) → send event
     // Event name: "requestStatusUpdated"
@@ -178,6 +181,37 @@ const updateRequestStatus = async (req, res) => {
     //   requestId: id,
     //   status: status
     // }
+
+    /* ================= EMAIL SECTION ================= */
+    if (status === "STAFF_APPROVED" || status === "REJECTED") {
+      const emailResult = await pool.query(
+        `
+    SELECT s.email
+    FROM request r
+    JOIN student s ON r.student_id = s.student_id
+    WHERE r.id = $1
+    `,
+        [id],
+      );
+
+      if (emailResult.rows.length > 0) {
+        const studentEmail = emailResult.rows[0].email;
+
+        sendEmail({
+          to: studentEmail,
+          subject:
+            status === "STAFF_APPROVED"
+              ? "Request Approved by Staff"
+              : "Request Rejected by Staff",
+          html: requestApprovalTemplate({
+            role: "staff",
+            status,
+            requestId: id,
+            remarks: remarks || "No remarks provided",
+          }),
+        });
+      }
+    }
 
     res.json({ message: "Status updated successfully" });
   } catch (error) {
