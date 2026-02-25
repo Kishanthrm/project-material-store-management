@@ -5,6 +5,9 @@ require("dotenv").config();
 const http = require("http");
 const { Server } = require("socket.io");
 
+// const sendEmail = require("./emailserver");
+
+
 const userRoutes = require("./routes/user/userRoutes");
 const requestRoutes = require("./routes/user/requestRoutes");
 const formRoutes = require("./routes/user/formRoutes");
@@ -45,6 +48,25 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
+
+//------------------------------------------------------------
+// app.get("/test-email", async (req, res) => {
+//   try {
+//     await sendEmail({
+//       to: process.env.EMAIL_USER, // send to yourself first
+//       subject: "Test Email",
+//       html: "<h2>Email is working ✅</h2>",
+//     });
+
+//     res.send("Email sent successfully");
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Email failed");
+//   }
+// });
+
+//==============================================================
+
 
 app.use(cors());
 app.use(express.json());
