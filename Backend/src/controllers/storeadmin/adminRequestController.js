@@ -182,7 +182,6 @@ exports.updateRequestStatus = async (req, res) => {
       }
     }
 
-    // 🔥🔥🔥 EMIT SOCKET EVENT TO STUDENT
     const io = req.app.get("io");
     io.to(studentId.toString()).emit("requestStatusUpdated", {
       requestId,

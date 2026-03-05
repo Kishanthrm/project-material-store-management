@@ -5,9 +5,6 @@ require("dotenv").config();
 const http = require("http");
 const { Server } = require("socket.io");
 
-// const sendEmail = require("./emailserver");
-
-
 const userRoutes = require("./routes/user/userRoutes");
 const requestRoutes = require("./routes/user/requestRoutes");
 const formRoutes = require("./routes/user/formRoutes");
@@ -18,6 +15,8 @@ const staffrequestRoutes = require("./routes/staff/staffrequestRoutes");
 
 const adminProfileRoutes = require("./routes/storeadmin/adminProfileRoutes");
 const adminRequestRoutes = require("./routes/storeadmin/adminRequestRoutes");
+
+const loginRoutes = require("./routes/loginRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -49,27 +48,10 @@ io.on("connection", (socket) => {
   });
 });
 
-//------------------------------------------------------------
-// app.get("/test-email", async (req, res) => {
-//   try {
-//     await sendEmail({
-//       to: process.env.EMAIL_USER, // send to yourself first
-//       subject: "Test Email",
-//       html: "<h2>Email is working ✅</h2>",
-//     });
-
-//     res.send("Email sent successfully");
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send("Email failed");
-//   }
-// });
-
-//==============================================================
-
-
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/auth",loginRoutes);
 
 //users route
 app.use("/api/users", userRoutes);

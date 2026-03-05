@@ -1,37 +1,47 @@
 import React, { useState, useEffect } from "react";
 import "./HomePage.css";
+import { authFetch } from "../../authFetch";
 
 const HomePageContent = () => {
   const [student, setStudent] = useState(null);
   const [events, setEvents] = useState([]);
   const [materialsList, setMaterialsList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     event_id: "",
-    special_lab_id: "",
     items: [{ material_id: "", quantity: "" }],
   });
 
-  // Fetch Initial Data
+  /* ================= FETCH INITIAL DATA ================= */
+
   useEffect(() => {
-    const studentId = 2; 
+    const loadData = async () => {
+      try {
+        // Get logged-in student from JWT
+        const studentRes = await authFetch("/form/student");
+        if (!studentRes) return;
+        const studentData = await studentRes.json();
+        setStudent(studentData);
 
-    fetch(`http://localhost:5000/api/form/students/${studentId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
+        const eventsRes = await authFetch("/form/events");
+        if (!eventsRes) return;
+        setEvents(await eventsRes.json());
 
-        setStudent(data)
-      });      
+        const materialsRes = await authFetch("/form/materials");
+        if (!materialsRes) return;
+        setMaterialsList(await materialsRes.json());
+      } catch (error) {
+        console.error("Error loading form data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    fetch("http://localhost:5000/api/form/events")
-      .then((res) => res.json())
-      .then((data) => setEvents(data));
-
-    fetch("http://localhost:5000/api/form/materials")
-      .then((res) => res.json())
-      .then((data) => setMaterialsList(data));
+    loadData();
   }, []);
+
+  /* ================= FORM HANDLERS ================= */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,10 +66,13 @@ const HomePageContent = () => {
     setFormData({ ...formData, items: updatedItems });
   };
 
+  /* ================= SUBMIT ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.event_id) {
-      alert("Please select event and lab");
+      alert("Please select an event");
       return;
     }
 
@@ -70,8 +83,8 @@ const HomePageContent = () => {
       }
     }
 
+    // DO NOT send student_id (JWT handles identity)
     const payload = {
-      student_id: student.student_id,
       special_lab_id: student.speciallab_id,
       event_id: Number(formData.event_id),
       materials: formData.items.map((item) => ({
@@ -79,36 +92,41 @@ const HomePageContent = () => {
         quantity: Number(item.quantity),
       })),
     };
-    console.log(payload);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/requests/create",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const response = await authFetch("/requests/create", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response) return;
 
       if (response.ok) {
         alert("Request submitted successfully!");
+        setFormData({
+          event_id: "",
+          items: [{ material_id: "", quantity: "" }],
+        });
       } else {
-        alert("Error submitting request");
+        const errorData = await response.json();
+        alert(errorData.message || "Error submitting request");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Submit error:", error);
     }
   };
 
-  if (!student) return <h3>Loading...</h3>;
+  if (loading) return <h3>Loading...</h3>;
+  if (!student) return <h3>Student not found</h3>;
+
+  /* ================= UI ================= */
 
   return (
     <div className="form-page">
       <form className="material-form" onSubmit={handleSubmit}>
         <h2>Materials Request Form</h2>
 
-        {/* Student Info (Read Only) */}
+        {/* Student Info */}
         <div className="grid-form">
           <div className="form-group">
             <label>Name</label>
@@ -134,12 +152,12 @@ const HomePageContent = () => {
             {events.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.name}
-              </option> //frontend recieves data from backend and list the data in dropdown using option , it is stored in order of value = id and user to see = name, if the user selects a lab the id is stored in usestate and react re-render the page with showing the lab with selected id in dropdown
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Lab */}
+        {/* Special Lab */}
         <div className="form-group">
           <label>Special Lab</label>
           <input value={student.special_lab_name} disabled />
@@ -158,12 +176,11 @@ const HomePageContent = () => {
               required
             >
               <option value="">Select Material</option>
-              {Array.isArray(materialsList) &&
-                materialsList.map((material) => (
-                  <option key={material.id} value={material.id}>
-                    {material.name}
-                  </option>
-                ))}
+              {materialsList.map((material) => (
+                <option key={material.id} value={material.id}>
+                  {material.name}
+                </option>
+              ))}
             </select>
 
             <input

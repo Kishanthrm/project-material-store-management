@@ -1,14 +1,30 @@
-  const express = require("express");
-  const router = express.Router();
+const express = require("express");
+const router = express.Router();
 
-  const {
-    getPendingRequests,
-    getCompletedRequests,
-    createRequest,
-  } = require("../../controllers/user/requestController");
+const { verifyToken } = require("../../middleware/authMiddleware");
+const { allowRoles } = require("../../middleware/roleMiddleware");
 
-  router.get("/pending/:id", getPendingRequests);
-  router.get("/completed/:id", getCompletedRequests);
-  router.post("/create", createRequest);
+const {
+  getPendingRequests,
+  getCompletedRequests,
+  createRequest,
+} = require("../../controllers/user/requestController");
 
-  module.exports = router;
+/*
+  All routes below:
+  1. Must be logged in (verifyToken)
+  2. Must have role = student
+*/
+
+router.get("/pending", verifyToken, allowRoles("student"), getPendingRequests);
+
+router.get(
+  "/completed",
+  verifyToken,
+  allowRoles("student"),
+  getCompletedRequests,
+);
+
+router.post("/create", verifyToken, allowRoles("student"), createRequest);
+
+module.exports = router;

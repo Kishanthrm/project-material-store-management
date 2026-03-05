@@ -5,7 +5,7 @@ const requestApprovalTemplate = require("../../templates/requestApprovalTemplate
 
 /* ================= GET PENDING REQUESTS ================= */
 const getPendingRequests = async (req, res) => {
-  const { id } = req.params;
+  const id = req.user.id;
   try {
     const result = await pool.query(
       `
@@ -66,7 +66,7 @@ const getPendingRequests = async (req, res) => {
 
 /* ================= GET COMPLETED REQUESTS ================= */
 const getCompletedRequests = async (req, res) => {
-  const { id } = req.params; // staff_id
+  const id = req.user.id;
 
   try {
     const result = await pool.query(
@@ -106,7 +106,7 @@ const getCompletedRequests = async (req, res) => {
       LEFT JOIN material m
         ON m.id = rm.material_id
 
-      WHERE r.status IN ('STAFF_APPROVED', 'REJECTED')
+      WHERE r.status IN ('STAFF_APPROVED', 'REJECTED','ISSUED')
         AND sl.speciallab_incharge_id = $1
 
       GROUP BY 

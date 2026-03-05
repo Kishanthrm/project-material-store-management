@@ -44,6 +44,7 @@ const bottomItems = [
   { text: "Logout", icon: <LogoutIcon />, path: "/" },
 ];
 
+
 /* ===== DRAWER MIXINS ===== */
 const openedMixin = (theme) => ({
   width: drawerWidth,

@@ -7,8 +7,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -18,9 +21,42 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Data:", formData);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      // if(response.ok)alert("success");
+      if (!response.ok) {
+        alert(data.message || "Login failed");
+        return;
+      }
+
+      // Store token & role
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      
+      // Redirect based on role
+      if (data.role === "student") {
+        navigate("/userdashboard");
+      } else if (data.role === "lab_incharge") {
+        navigate("/staffdashboard");
+      } else if (data.role === "store_admin") {
+        navigate("/storedashboard");
+      }
+
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Server error");
+    }
   };
 
   return (
@@ -30,28 +66,18 @@ const Login = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(135deg, #e3f2fd, #f5f7fb)",
       }}
     >
-      <Card sx={{ width: 380, borderRadius: 3, boxShadow: 6 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" textAlign="center" gutterBottom>
+      <Card sx={{ width: 380 }}>
+        <CardContent>
+          <Typography variant="h5" textAlign="center">
             Login
-          </Typography>
-
-          <Typography
-            variant="body2"
-            textAlign="center"
-            color="text.secondary"
-            mb={3}
-          >
-            Project Material Management System
           </Typography>
 
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email / Username"
+              label="Email"
               name="email"
               margin="normal"
               value={formData.email}
@@ -74,21 +100,11 @@ const Login = () => {
               fullWidth
               type="submit"
               variant="contained"
-              sx={{ mt: 3, py: 1.2 }}
+              sx={{ mt: 2 }}
             >
               Login
             </Button>
           </form>
-
-          <Typography
-            variant="caption"
-            display="block"
-            textAlign="center"
-            mt={2}
-            color="text.secondary"
-          >
-            © 2026 College Project Store
-          </Typography>
         </CardContent>
       </Card>
     </Box>
