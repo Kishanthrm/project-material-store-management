@@ -1,7 +1,7 @@
 const pool = require("../../config/db");
 
 const getStudentById = async (req, res) => {
-  const { id } = req.params; 
+  const id = req.user.id; 
 
   try {
     const result = await pool.query(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import { authFetch } from "../../authFetch";
 import "./DashBoard.css";
 
 import Accordion from "@mui/material/Accordion";
@@ -7,19 +8,21 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import EditIcon from "@mui/icons-material/Edit";
 
 import profileImg from "../../assets/download.jpg";
 
-const socket = io("http://localhost:5000"); // Connects to backend socket server.
+const socket = io("http://localhost:5000", {
+  auth: {
+    token: localStorage.getItem("token"),
+  },
+}); // Connects to backend socket server.
+const token = localStorage.getItem("token");
 
 const DashBoardContent = () => {
   const [expanded, setExpanded] = useState(false);
   const [profile, setProfile] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [completedRequests, setCompletedRequests] = useState([]);
-
-  const studentId = 2; // later replace with JWT value
 
   const handleChange = (panel) => (e, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -28,25 +31,19 @@ const DashBoardContent = () => {
   /* ================= FETCH FUNCTIONS ================= */
 
   const fetchProfile = async () => {
-    const res = await fetch(
-      `http://localhost:5000/api/users/profile/${studentId}`
-    );
+    const res = await authFetch("/users/profile");
     const data = await res.json();
     setProfile(data);
   };
 
   const fetchPending = async () => {
-    const res = await fetch(
-      `http://localhost:5000/api/requests/pending/${studentId}`
-    );
+    const res = await authFetch("/requests/pending");
     const data = await res.json();
     setPendingRequests(data);
   };
 
   const fetchCompleted = async () => {
-    const res = await fetch(
-      `http://localhost:5000/api/requests/completed/${studentId}`
-    );
+    const res = await authFetch("/requests/completed");
     const data = await res.json();
     setCompletedRequests(data);
   };
@@ -62,8 +59,6 @@ const DashBoardContent = () => {
   /* ================= SOCKET LISTENER ================= */
 
   useEffect(() => {
-    // Join room using studentId
-    socket.emit("joinRoom", studentId.toString());
 
     // Listen for real-time update
     socket.on("requestStatusUpdated", (data) => {
@@ -95,8 +90,7 @@ const DashBoardContent = () => {
               <strong>Name:</strong> <span>{profile.name}</span>
             </div>
             <div>
-              <strong>Register Number:</strong>{" "}
-              <span>{profile.reg_no}</span>
+              <strong>Register Number:</strong> <span>{profile.reg_no}</span>
             </div>
           </div>
         </div>
@@ -125,8 +119,7 @@ const DashBoardContent = () => {
               <strong>Year:</strong> <span>{profile.year}</span>
             </div>
             <div>
-              <strong>Special Lab:</strong>{" "}
-              <span>{profile.lab_name}</span>
+              <strong>Special Lab:</strong> <span>{profile.lab_name}</span>
             </div>
             <div>
               <strong>No. of Requests:</strong>{" "}
@@ -154,8 +147,7 @@ const DashBoardContent = () => {
                   <strong>Event:</strong> {request.event_name}
                 </span>
                 <span>
-                  <strong>Materials:</strong>{" "}
-                  {request.materials_count}
+                  <strong>Materials:</strong> {request.materials_count}
                 </span>
                 <span>
                   <strong>Status:</strong> {request.status}
@@ -196,8 +188,7 @@ const DashBoardContent = () => {
                   <strong>Event:</strong> {request.event_name}
                 </span>
                 <span>
-                  <strong>Materials:</strong>{" "}
-                  {request.materials_count}
+                  <strong>Materials:</strong> {request.materials_count}
                 </span>
                 <span>
                   <strong>Status:</strong> {request.status}

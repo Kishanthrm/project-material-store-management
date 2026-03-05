@@ -9,6 +9,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import Header from "./components/Header";
 import profileImg from "../assets/download.jpg";
+import { authFetch } from "../authFetch";
 
 const StaffDashboard = () => {
   const [expanded, setExpanded] = useState(false);
@@ -16,61 +17,67 @@ const StaffDashboard = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [completedRequests, setCompletedRequests] = useState([]);
   const [remarksMap, setRemarksMap] = useState({});
-
-  const staffId = 1; // later get from JWT
+  const [loading, setLoading] = useState(true);
 
   const handleChange = (panel) => (e, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
+  /* ================= FETCH DATA ================= */
+
   useEffect(() => {
-    // Profile
-    fetch(`http://localhost:5000/api/staff/profile/${staffId}`)
-      .then((res) => res.json())
-      .then((data) => setProfile(data));
+    const loadData = async () => {
+      try {
+        const profileRes = await authFetch("/staff/profile");
+        if (!profileRes) return;
+        setProfile(await profileRes.json());
 
-    // Pending Requests
-    fetch(`http://localhost:5000/api/staff/requests/pending/${staffId}`)
-      .then((res) => res.json())
-      .then((data) => setPendingRequests(data));
+        const pendingRes = await authFetch("/staff/requests/pending");
+        if (!pendingRes) return;
+        setPendingRequests(await pendingRes.json());
 
-    // Completed Requests
-    fetch(`http://localhost:5000/api/staff/requests/complete/${staffId}`)
-      .then((res) => res.json())
-      .then((data) => setCompletedRequests(data));
+        const completedRes = await authFetch("/staff/requests/complete");
+        if (!completedRes) return;
+        setCompletedRequests(await completedRes.json());
+      } catch (err) {
+        console.error("Error loading staff dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
+
+  /* ================= STATUS UPDATE ================= */
 
   const handleStatusUpdate = async (requestId, status, remarks) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/staff/requests/update-status/${requestId}`,
+      const response = await authFetch(
+        `/staff/requests/update-status/${requestId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            status,
-            remarks,
-          }),
+          body: JSON.stringify({ status, remarks }),
         },
       );
 
+      if (!response) return;
+
       if (response.ok) {
-        alert("updated successfully");
-        
+        alert("Updated successfully");
+
         const updatedRequest = pendingRequests.find(
           (req) => req.id === requestId,
         );
 
-        // Remove from pending
         setPendingRequests((prev) =>
           prev.filter((req) => req.id !== requestId),
         );
 
-        // Add to completed with new status
         setCompletedRequests((prev) => [
           {
             ...updatedRequest,
-            status: status,
+            status,
             lab_incharge_remarks:
               remarks ||
               (status === "STAFF_APPROVED"
@@ -80,14 +87,16 @@ const StaffDashboard = () => {
           ...prev,
         ]);
       } else {
-        alert("Error updating status");
+        const errorData = await response.json();
+        alert(errorData.message || "Error updating status");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Update error:", error);
     }
   };
 
-  if (!profile) return <h3>Loading...</h3>;
+  if (loading) return <h3>Loading...</h3>;
+  if (!profile) return <h3>No Profile Found</h3>;
 
   return (
     <>
@@ -103,10 +112,10 @@ const StaffDashboard = () => {
 
             <div className="profile-basic">
               <div>
-                <strong>Name:</strong> <span>{profile.staff_name}</span>
+                <strong>Name:</strong> {profile.staff_name}
               </div>
               <div>
-                <strong>Faculty Id:</strong> <span>{profile.staff_id}</span>
+                <strong>Faculty Id:</strong> {profile.staff_id}
               </div>
             </div>
           </div>
@@ -116,14 +125,13 @@ const StaffDashboard = () => {
           <div className="profile-bottom">
             <div className="profile-left">
               <div>
-                <strong>Department:</strong>{" "}
-                <span>{profile.department_name}</span>
+                <strong>Department:</strong> {profile.department_name}
               </div>
               <div>
-                <strong>Designation:</strong> <span>{profile.designation}</span>
+                <strong>Designation:</strong> {profile.designation}
               </div>
               <div>
-                <strong>Email:</strong> <span>{profile.email}</span>
+                <strong>Email:</strong> {profile.email}
               </div>
             </div>
 
@@ -131,16 +139,15 @@ const StaffDashboard = () => {
 
             <div className="profile-right">
               <div>
-                <strong>Special Lab:</strong>{" "}
-                <span>{profile.special_lab_name}</span>
+                <strong>Special Lab:</strong> {profile.special_lab_name}
               </div>
               <div>
                 <strong>Number of Students:</strong>{" "}
-                <span>{profile.number_of_students}</span>
+                {profile.number_of_students}
               </div>
               <div>
                 <strong>Number of Requests:</strong>{" "}
-                <span>{profile.number_of_requests}</span>
+                {profile.number_of_requests}
               </div>
             </div>
           </div>
@@ -175,34 +182,28 @@ const StaffDashboard = () => {
               </AccordionSummary>
 
               <AccordionDetails>
-                <div className="materials-list">
-                  <strong>Requested Materials</strong>
-                  <ul>
-                    {req.materials_list?.map((mat, index) => (
-                      <li key={index}>
-                        {mat.material_name} x {mat.quantity}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <ul>
+                  {req.materials_list?.map((mat, index) => (
+                    <li key={index}>
+                      {mat.material_name} × {mat.quantity}
+                    </li>
+                  ))}
+                </ul>
 
-                <div className="remarks-box">
-                  <textarea
-                    rows={3}
-                    placeholder="Add remarks..."
-                    value={remarksMap[req.id] || ""}
-                    onChange={(e) =>
-                      setRemarksMap({
-                        ...remarksMap,
-                        [req.id]: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+                <textarea
+                  rows={3}
+                  placeholder="Add remarks..."
+                  value={remarksMap[req.id] || ""}
+                  onChange={(e) =>
+                    setRemarksMap({
+                      ...remarksMap,
+                      [req.id]: e.target.value,
+                    })
+                  }
+                />
 
                 <div className="action-buttons">
                   <button
-                    className="approve-btn"
                     onClick={() =>
                       handleStatusUpdate(
                         req.id,
@@ -215,7 +216,6 @@ const StaffDashboard = () => {
                   </button>
 
                   <button
-                    className="reject-btn"
                     onClick={() =>
                       handleStatusUpdate(req.id, "REJECTED", remarksMap[req.id])
                     }
@@ -233,11 +233,7 @@ const StaffDashboard = () => {
           <Typography variant="h6">Completed Requests</Typography>
 
           {completedRequests.map((req) => (
-            <Accordion
-              key={req.id}
-              expanded={expanded === `completed-${req.id}`}
-              onChange={handleChange(`completed-${req.id}`)}
-            >
+            <Accordion key={req.id}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <div className="pending-summary">
                   <span>
@@ -247,34 +243,15 @@ const StaffDashboard = () => {
                     <strong>Event:</strong> {req.event_name}
                   </span>
                   <span>
-                    <strong>Items:</strong> {req.materials_count}
-                  </span>
-                  <span>
-                    <strong>Time:</strong>{" "}
-                    {new Date(req.request_time).toLocaleString()}
-                  </span>
-                  <span className={`status ${req.status.toLowerCase()}`}>
-                    {req.status}
+                    <strong>Status:</strong> {req.status}
                   </span>
                 </div>
               </AccordionSummary>
 
               <AccordionDetails>
-                <div className="materials-list">
-                  <strong>Materials</strong>
-                  <ul>
-                    {req.materials_list?.map((mat, index) => (
-                      <li key={index}>
-                        {mat.material_name} × {mat.quantity}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="final-remarks">
-                  <strong>Remarks</strong>
-                  <p>{req.lab_incharge_remarks}</p>
-                </div>
+                <p>
+                  <strong>Remarks:</strong> {req.lab_incharge_remarks}
+                </p>
               </AccordionDetails>
             </Accordion>
           ))}

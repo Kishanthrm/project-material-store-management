@@ -28,16 +28,22 @@ const MaterialListContent = () => {
 
   /* 🔹 Fetch Materials from Backend */
   useEffect(() => {
-    fetch("http://localhost:5000/api/material/list")
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchMaterials = async () => {
+      try {
+        const res = await authFetch("/material/list");
+
+        if (!res) return; // in case token expired
+
+        const data = await res.json();
         setMaterials(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error fetching materials:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchMaterials();
   }, []);
 
   const handleChangePage = (_, newPage) => {
