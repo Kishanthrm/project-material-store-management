@@ -1,13 +1,6 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-} from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +9,8 @@ const Login = () => {
     email: "",
     password: "",
   });
+
+  /* ================= HANDLERS (unchanged) ================= */
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -27,24 +22,20 @@ const Login = () => {
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
-      // if(response.ok)alert("success");
+
       if (!response.ok) {
         alert(data.message || "Login failed");
         return;
       }
 
-      // Store token & role
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
-      
-      // Redirect based on role
+
       if (data.role === "student") {
         navigate("/userdashboard");
       } else if (data.role === "lab_incharge") {
@@ -52,62 +43,81 @@ const Login = () => {
       } else if (data.role === "store_admin") {
         navigate("/storedashboard");
       }
-
     } catch (error) {
       console.error("Login error:", error);
       alert("Server error");
     }
   };
 
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Card sx={{ width: 380 }}>
-        <CardContent>
-          <Typography variant="h5" textAlign="center">
-            Login
-          </Typography>
+  /* ================= UI ================= */
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Email"
+  return (
+    <div className="login-page">
+      {/* ── Brand strip ── */}
+      <div className="login-brand">
+        <div className="login-brand-logo">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18" />
+          </svg>
+        </div>
+        <span className="login-brand-name">PMMS</span>
+      </div>
+
+      {/* ── Card ── */}
+      <div className="login-card">
+        <div className="login-card-header">
+          <h1 className="login-title">Welcome back</h1>
+          <p className="login-subtitle">Project Material Management System</p>
+        </div>
+
+        <div className="login-divider" />
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-field">
+            <label className="login-label">Email</label>
+            <input
+              type="email"
               name="email"
-              margin="normal"
+              className="login-input"
+              placeholder="you@college.edu"
               value={formData.email}
               onChange={handleChange}
               required
             />
+          </div>
 
-            <TextField
-              fullWidth
-              label="Password"
-              name="password"
+          <div className="login-field">
+            <label className="login-label">Password</label>
+            <input
               type="password"
-              margin="normal"
+              name="password"
+              className="login-input"
+              placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
               required
             />
+          </div>
 
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              sx={{ mt: 2 }}
-            >
-              Login
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </Box>
+          <button type="submit" className="login-btn">
+            Sign in
+          </button>
+        </form>
+      </div>
+
+      <p className="login-footer">
+        © {new Date().getFullYear()} Project Material Management System
+      </p>
+    </div>
   );
 };
 

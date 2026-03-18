@@ -1,20 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+
+/* ─── Page wrapper ─── */
+.ml-page {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 32px 24px;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
+
+/* ─── Card ─── */
 .material-card {
-  max-width: 600px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  padding: 24px 28px;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: none !important;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
 }
 
-/* Table header */
+/* ─── Card title ─── */
+.ml-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+}
+
+.ml-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0 0 20px;
+}
+
+.ml-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 0 0 20px;
+}
+
+/* ─── Table header ─── */
 .MuiTableCell-head {
-  background-color: #e3f2fd;
-  color: #0d47a1;
-  font-weight: 600;
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  font-family: 'Sora', 'Segoe UI', sans-serif !important;
+  padding: 12px 16px !important;
 }
 
-/* Hover effect */
+/* ─── Table body cells ─── */
+.MuiTableCell-body {
+  font-size: 13px !important;
+  color: #374151 !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  font-family: 'Sora', 'Segoe UI', sans-serif !important;
+  padding: 12px 16px !important;
+}
+
+/* ─── Row hover ─── */
 .MuiTableRow-hover:hover {
-  background-color: #f1f8ff !important;
+  background-color: #f9fafb !important;
+}
+
+/* ─── Remove default Paper elevation ─── */
+.MuiPaper-elevation1 {
+  box-shadow: none !important;
+}
+
+/* ─── Pagination ─── */
+.MuiTablePagination-root {
+  font-family: 'Sora', 'Segoe UI', sans-serif !important;
+  font-size: 12px !important;
+  color: #6b7280 !important;
+  border-top: 1px solid #f3f4f6 !important;
+}
+
+.MuiTablePagination-selectLabel,
+.MuiTablePagination-displayedRows {
+  font-family: 'Sora', 'Segoe UI', sans-serif !important;
+  font-size: 12px !important;
+  color: #6b7280 !important;
+}
+
+.MuiTablePagination-select {
+  font-family: 'Sora', 'Segoe UI', sans-serif !important;
+  font-size: 12px !important;
+  color: #374151 !important;
+}
+
+.MuiIconButton-root {
+  color: #6b7280 !important;
+}
+
+.MuiIconButton-root:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* ─── Loading state ─── */
+.ml-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  color: #9ca3af;
+  font-size: 13px;
+  gap: 12px;
+}
+
+/* Override MUI CircularProgress colour ─── */
+.ml-loading .MuiCircularProgress-root {
+  color: #4b5563 !important;
 }

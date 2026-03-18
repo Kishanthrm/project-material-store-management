@@ -125,7 +125,9 @@ const HomePageContent = () => {
     <div className="form-page">
       <form className="material-form" onSubmit={handleSubmit}>
         <h2>Materials Request Form</h2>
-
+        <p className="form-title-sub">
+          Submit a new material request for your lab event
+        </p>
         {/* Student Info */}
         <div className="grid-form">
           <div className="form-group">
