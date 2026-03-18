@@ -2,7 +2,7 @@ const pool = require("../../config/db");
 
 exports.getAdminDashboardDetails = async (req, res) => {
   try {
-    // 1️⃣ Get Store Admin Profile
+    // Get Store Admin Profile
     const profileQuery = `
       SELECT 
         staff_id,

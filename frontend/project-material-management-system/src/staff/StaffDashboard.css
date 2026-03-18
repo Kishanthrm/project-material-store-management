@@ -1,0 +1,379 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+
+/* ══════════════════════════════════════════════════════
+   HARD RESET — kills every colour from old DashBoard.css
+   ══════════════════════════════════════════════════════ */
+.profile-card,
+.pending-section,
+.completed-section,
+.dashboard-content {
+  background: unset;
+  box-shadow: none;
+}
+/* old img border was #1976d2 blue */
+.profile-img img {
+  border-color: #d1d5db !important;
+}
+/* old section h6 titles were orange / green */
+.pending-section h6,
+.completed-section h6 {
+  color: #9ca3af !important;
+}
+/* old strong width hack */
+strong {
+  width: auto !important;
+};
+
+/* ─── Page wrapper ─── */
+.dashboard-content {
+  flex: 1;
+  padding: 150px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
+
+/* ─── Shared card base ─── */
+.profile-card {
+  width: 100%;
+  max-width: 900px;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  box-shadow: none !important;
+}
+
+/* ─── Profile top strip ─── */
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  margin-top: 60px;
+}
+
+.profile-img img {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  border: 2px solid #cbd5e1 !important;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-basic {
+  flex: 1;
+}
+
+.profile-basic div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.profile-basic div:first-child {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+}
+
+/* ─── KPI bottom strip ─── */
+.profile-bottom {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.kpi-box {
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 13px 16px;
+}
+
+.kpi-box-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 5px;
+}
+
+.kpi-box-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.kpi-box-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+/* hide old divider */
+.vertical-divider { display: none; }
+.profile-left, .profile-right { display: none; }
+
+/* ─── Section heading ─── */
+.db-section-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin: 0 0 16px;
+}
+
+/* ─── Pending / completed section cards — force white, no tints ─── */
+.pending-section,
+.completed-section {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+/* kill old h6 colour overrides */
+.pending-section h6,
+.completed-section h6 {
+  color: #9ca3af !important;
+  font-family: 'Sora', 'Segoe UI', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+/* ─── Completed section scrollable container ─── */
+.completed-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.completed-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.completed-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.completed-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+/* ─── Accordion overrides ─── */
+.MuiAccordion-root {
+  background: rgba(255,255,255,0) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  margin-bottom: 8px !important;
+  box-shadow: none !important;
+}
+
+.MuiAccordion-root::before {
+  display: none !important;
+}
+
+.MuiAccordion-root.Mui-expanded {
+  margin-bottom: 8px !important;
+}
+
+.MuiAccordionSummary-root {
+  min-height: 52px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+}
+
+.MuiAccordionSummary-root.Mui-expanded {
+  border-bottom: 1px solid #f1f5f9 !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+.MuiAccordionDetails-root {
+  padding: 14px 16px !important;
+  background: #f8fafc !important;
+  border-radius: 0 0 10px 10px !important;
+}
+
+/* ─── Accordion summary row ─── */
+.pending-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+}
+
+.pending-summary .sum-event {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.pending-summary .sum-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.sum-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.sum-badge.pending  { background: #fef9c3; color: #92400e; }
+.sum-badge.approved { background: #dcfce7; color: #166534; }
+.sum-badge.rejected { background: #fee2e2; color: #991b1b; }
+
+.sum-time {
+  font-size: 11px;
+  color: #d1d5db;
+  white-space: nowrap;
+}
+
+/* ─── Detail panel ─── */
+.detail-materials {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.detail-materials li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  padding: 5px 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+}
+
+.detail-materials li:last-child {
+  border-bottom: none;
+}
+
+.detail-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* ─── Remarks textarea ─── */
+.remarks-area {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  color: #374151;
+  background: #ffffff;
+  resize: vertical;
+  margin-top: 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.remarks-area:focus {
+  border-color: #475569;
+  box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.1);
+}
+
+/* ─── Action buttons ─── */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-approve {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.btn-approve:hover {
+  background: #bbf7d0;
+}
+
+.btn-reject {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-reject:hover {
+  background: #fecaca;
+}
+
+/* ─── Remarks display in completed ─── */
+.completed-remarks {
+  font-size: 13px;
+  color: #64748b;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  margin: 0;
+}
+
+.completed-remarks strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* ─── Loading / error ─── */
+.staff-loading,
+.staff-error {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .dashboard-content { padding: 16px 12px 32px; }
+  .profile-card { padding: 16px 14px; }
+  .profile-bottom { grid-template-columns: repeat(2, 1fr); }
+  .pending-summary { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .sum-time { display: none; }
+}
