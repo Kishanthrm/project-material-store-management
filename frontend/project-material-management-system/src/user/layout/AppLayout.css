@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+
+/* ─── Root wrapper ─── */
+.al-root {
+  display: flex;
+  min-height: 100vh;
+  background: #f3f4f6;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+}
+
+/* ─── Top bar ─── */
+.al-topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 64px;
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  z-index: 1100;
+  transition: left 0.25s ease;
+}
+
+.al-topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f9fafb;
+  letter-spacing: -0.2px;
+}
+
+/* ─── Main content area ─── */
+.al-content {
+  flex: 1;
+  padding: 88px 28px 40px;
+  transition: margin-left 0.25s ease;
+  min-width: 0;
+}
