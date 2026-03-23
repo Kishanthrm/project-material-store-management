@@ -1,7 +1,7 @@
 export const authFetch = async (url, options = {}) => {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(`http://localhost:5000/api${url}`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api${url}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
